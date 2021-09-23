@@ -25,10 +25,17 @@
 
 namespace LibreNMS\Data\Store;
 
+use App\Data\DataGroup;
+use App\Data\DataSet;
+use App\Graphing\QueryBuilder;
 use Illuminate\Support\Str;
 use LibreNMS\Config;
 use LibreNMS\Data\Measure\Measurement;
+use LibreNMS\Data\SeriesData;
+use LibreNMS\Enum\DataRateType;
+use LibreNMS\Enum\DataType;
 use LibreNMS\Exceptions\FileExistsException;
+use LibreNMS\Exceptions\RrdExportFailedException;
 use LibreNMS\Exceptions\RrdGraphException;
 use LibreNMS\Proc;
 use LibreNMS\Util\Debug;
@@ -49,6 +56,7 @@ class Rrd extends BaseDatastore
     private $rrdcached;
     private $rra;
     private $step;
+    private $heartbeat;
 
     public function __construct()
     {
@@ -58,6 +66,7 @@ class Rrd extends BaseDatastore
         $this->init();
         $this->rrd_dir = Config::get('rrd_dir', Config::get('install_dir') . '/rrd');
         $this->step = Config::get('rrd.step', 300);
+        $this->heartbeat = Config::get('rrd.heartbeat', 600);
         $this->rra = Config::get(
             'rrd_rra',
             'RRA:AVERAGE:0.5:1:2016 RRA:AVERAGE:0.5:6:1440 RRA:AVERAGE:0.5:24:1440 RRA:AVERAGE:0.5:288:1440 ' .
@@ -130,6 +139,83 @@ class Rrd extends BaseDatastore
         if ($this->isAsyncRunning()) {
             $this->async_process->close('quit');
         }
+    }
+
+    public function record(DataGroup $data)
+    {
+        foreach ($data->getDataSets() as $ds) {
+            $rrd = $this->fileName($data, $ds);
+            if (! $this->checkRrdExists($rrd)) {
+                $dir = "$this->rrd_dir/" . $data->getName();
+                if (! file_exists($dir)) {
+                    mkdir($dir);
+                }
+                $this->command('create', $rrd, $this->genDef($ds));
+            }
+            $this->update($rrd, ['value' => $ds->getValue()]);
+        }
+    }
+
+    public function fetch(QueryBuilder $query): SeriesData
+    {
+        $data = $this->xport($query->toQuery(), $query->getStart()->timestamp, $query->getEnd()->timestamp);
+
+        $timestamp = $data['meta']['start'];
+        $step = $data['meta']['step'];
+        $labels = $data['meta']['legend'];
+        array_unshift($labels, 'timestamp');
+        $output = SeriesData::make($labels);
+
+        foreach ($data['data'] as $values) {
+            $output->appendPoint($timestamp, ...$values);
+            $timestamp += $step;
+        }
+
+        return $output;
+    }
+
+    public function fileName(DataGroup $dg, DataSet $ds)
+    {
+        $tags = [];
+        foreach ($dg->getTags() as $tag => $value) {
+            $tags[] = $tag . $value;
+        }
+
+        return $this->rrd_dir . '/' . $dg->getName() . '/' . $ds->getName() . '-' . implode('_', $tags) . '.rrd';
+    }
+
+    private function genDef(DataSet $ds)
+    {
+        $type = $this->getType($ds);
+        $min = $ds->getMin() ?? 'U';
+        $max = $ds->getMax() ?? 'U';
+
+        $def = "--step $this->step DS:value";
+
+        // enable migration
+        $file = $ds->getOldRrdFile();
+        if ($file && $this->checkRrdExists($file)) {
+            $old = $ds->getOldDsName();
+            $def = "--source $file $def=$old";
+        }
+
+        $def .= ":$type:$this->heartbeat:$min:$max";
+
+        return "$def $this->rra";
+    }
+
+    private function getType(DataSet $ds)
+    {
+        $type = $ds->getRateType();
+        if ($type === DataRateType::COUNTER) {
+            return $ds->getType() === DataType::INT ? 'COUNTER' : 'DCOUNTER';
+        }
+
+        if ($type === DataRateType::DERIVE) {
+            return $ds->getType() === DataType::INT ? 'DERIVE' : 'DDERIVE';
+        }
+
+        return $type === DataRateType::ABSOLUTE ? 'ABSOLUTE' : 'GAUGE';
     }
 
     /**
@@ -602,6 +688,29 @@ class Rrd extends BaseDatastore
         ];
 
         return $image_suffixes[$type] ?? '';
+    }
+
+    public function xport($definition, $start, $end = null)
+    {
+        $cmd = [Config::get('rrdtool', 'rrdtool'), 'xport', '--json', '-s', $start];
+        if ($end) {
+            array_push($cmd, '-e', $end);
+        }
+        if ($this->rrdcached) {
+            array_push($cmd, '--daemon', $this->rrdcached);
+        }
+        $cmd = array_merge($cmd, $definition);
+
+        $proc = new Process($cmd);
+        $ret = $proc->run();
+
+        $json = json_decode($proc->getOutput(), true);
+
+        if ($ret || json_last_error()) {
+            throw new RrdExportFailedException(implode(' ', $cmd), $proc->getErrorOutput(), $proc->getOutput(), json_last_error_msg());
+        }
+
+        return $json;
     }
 
     public function __destruct()

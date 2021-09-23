@@ -26,21 +26,28 @@
 
 namespace LibreNMS\Data\Store;
 
+use App\Data\DataGroup;
+use App\Graphing\QueryBuilder;
 use InfluxDB\Client;
+use InfluxDB\Database;
 use InfluxDB\Driver\UDP;
+use InfluxDB\Point;
 use LibreNMS\Config;
 use LibreNMS\Data\Measure\Measurement;
+use LibreNMS\Data\SeriesData;
 use Log;
 
 class InfluxDB extends BaseDatastore
 {
     /** @var \InfluxDB\Database */
     private $connection;
+    private $annotationsEnabled;
 
-    public function __construct(\InfluxDB\Database $influx)
+    public function __construct(Database $influx)
     {
         parent::__construct();
         $this->connection = $influx;
+        $this->annotationsEnabled = Config::get('datastore.annotations');
 
         // if the database doesn't exist, create it.
         try {
@@ -60,6 +67,38 @@ class InfluxDB extends BaseDatastore
     public static function isEnabled()
     {
         return Config::get('influxdb.enable', false);
+    }
+
+    public function record(DataGroup $dataGroup)
+    {
+        $stat = Measurement::start('write');
+        $fields = [];
+
+        /** @var \App\Data\DataSet $ds */
+        foreach ($dataGroup->getDataSets() as $ds) {
+            $fields[$ds->getName()] = $ds->getValue();
+        }
+
+        $tags = $this->annotationsEnabled
+            ? array_merge($dataGroup->getTags(), $dataGroup->getAnnotations())
+            : $dataGroup->getTags();
+
+        try {
+            $point = new Point(
+                $dataGroup->getName(),
+                null,
+                $tags,
+                $fields,
+                $dataGroup->getTimestamp(),
+            );
+            $this->connection->writePoints([$point], Database::PRECISION_SECONDS);
+            d_echo("[InfluxDB] $point");
+
+            $this->recordStatistic($stat->end());
+        } catch (\Exception $e) {
+            Log::error('InfluxDB exception: ' . $e->getMessage());
+            Log::debug($e->getTraceAsString());
+        }
     }
 
     /**
@@ -112,7 +151,7 @@ class InfluxDB extends BaseDatastore
 
         try {
             $points = [
-                new \InfluxDB\Point(
+                new Point(
                     $measurement,
                     null, // the measurement value
                     $tmp_tags,
@@ -177,5 +216,29 @@ class InfluxDB extends BaseDatastore
     public function wantsRrdTags()
     {
         return false;
+    }
+
+    /**
+     * @return \InfluxDB\Database
+     */
+    public function getConnection(): Database
+    {
+        return $this->connection;
+    }
+
+    public function fetch(QueryBuilder $query): SeriesData
+    {
+        $resultSet = $this->getConnection()->query($query->toQuery(), ['epoch' => 's']);
+
+        try {
+            $output = SeriesData::make($resultSet->getColumns());
+            foreach ($resultSet->getSeries()[0]['values'] as $points) {
+                $output->appendPoint(...$points);
+            }
+
+            return $output;
+        } catch (\Exception $e) {
+            return new SeriesData();
+        }
     }
 }

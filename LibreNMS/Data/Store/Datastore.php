@@ -25,12 +25,16 @@
 
 namespace LibreNMS\Data\Store;
 
+use App\Data\DataGroup;
+use App\Graphing\QueryBuilder;
 use LibreNMS\Config;
+use LibreNMS\Data\SeriesData;
 use LibreNMS\Interfaces\Data\Datastore as DatastoreContract;
 
 class Datastore
 {
     protected $stores;
+    private $graph_store;
 
     /**
      * Initialize and create the Datastore(s)
@@ -67,7 +71,10 @@ class Datastore
      */
     public function __construct($datastores)
     {
-        $this->stores = $datastores;
+        $this->graph_store = Config::get('datastores.graphs.source', 'rrd');
+        $this->stores = collect($datastores)->keyBy(function ($datastore) {
+            return strtolower($datastore->getName());
+        });
     }
 
     /**
@@ -77,14 +84,8 @@ class Datastore
      */
     public function disable($name)
     {
-        $store = app("LibreNMS\\Data\\Store\\$name");
-        $position = array_search($store, $this->stores);
-        if ($position !== false) {
-            c_echo("[%g$name Disabled%n]\n");
-            unset($this->stores[$position]);
-        } else {
-            c_echo("[%g$name is not a valid datastore name%n]\n");
-        }
+        $this->stores->forget($name);
+        c_echo("[%g$name Disabled%n]\n");
     }
 
     /**
@@ -122,6 +123,22 @@ class Datastore
         }
     }
 
+    public function record(DataGroup $dataGroup)
+    {
+        $this->stores->each->record($dataGroup);
+    }
+
+    public function fetch(QueryBuilder $query): SeriesData
+    {
+        $store = $this->stores->get($query->getDatastore() ?? $this->graph_store);
+
+        if ($store === null) {
+            throw new \Exception('Invalid graphing datastore');
+        }
+
+        return $store->fetch($query);
+    }
+
     /**
      * Filter all elements with keys that start with 'rrd_'
      *
@@ -144,7 +161,7 @@ class Datastore
     /**
      * Get all the active data stores
      *
-     * @return array
+     * @return \Illuminate\Support\Collection
      */
     public function getStores()
     {
@@ -153,7 +170,7 @@ class Datastore
 
     public function getStats()
     {
-        return array_reduce($this->stores, function ($result, DatastoreContract $store) {
+        return $this->stores->reduce(function ($result, DatastoreContract $store) {
             $result[$store->getName()] = $store->getStats();
 
             return $result;
