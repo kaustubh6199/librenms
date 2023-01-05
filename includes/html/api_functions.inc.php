@@ -1454,6 +1454,7 @@ function get_oxidized_config(Illuminate\Http\Request $request)
 function list_oxidized(Illuminate\Http\Request $request)
 {
     $return = [];
+
     $devices = Device::query()
              ->where('disabled', 0)
              ->when($request->route('hostname'), function ($query, $hostname) {
@@ -1507,6 +1508,21 @@ function list_oxidized(Illuminate\Http\Request $request)
         //Exclude groups from being sent to Oxidized
         if (in_array($output['group'], Config::get('oxidized.ignore_groups'))) {
             continue;
+        }
+
+        // Device group support
+        // First run legacy mappings and then override groups if this feature is being used
+        // The list of enabled groups is traversed in order and the first match is used to set the membership
+        $device_groups = DeviceGroup::whereIn('name', Config::get('oxidized.enabled_groups', []))->get();
+        if ($device_groups->isNotEmpty()) {
+            $processed_devices = new Collection;
+            foreach ($device_groups as $dev_grp) {
+                # TODO, if the current device is in this group then...
+                if($dev_grp->contains($device) && ! $processed_devices->contains($device)) {
+                    $output['group'] = $dev_grp->name;
+                    $processed_devices->push($device);
+                }
+            }
         }
 
         $return[] = $output;
