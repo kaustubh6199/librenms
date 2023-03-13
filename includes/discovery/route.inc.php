@@ -99,7 +99,7 @@ if (! isset($ipForwardNb['0']['inetCidrRouteNumber']) && $device['os'] != 'route
         $entryClean['device_id'] = $device['device_id'];
         $entryClean['port_id'] = Device::find($device['device_id'])->ports()->where('ifIndex', '=', $entryClean['inetCidrRouteIfIndex'])->first()->port_id;
         $entryClean['updated_at'] = $update_timestamp;
-        $current = $mixed['']['ipv4'][$inetCidrRouteDest][$inetCidrRoutePfxLen][$entryClean['inetCidrRoutePolicy']]['ipv4'][$inetCidrRouteNextHop];
+        $current = $mixed['']['ipv4'][$entryClean['inetCidrRouteDest']][$entryClean['inetCidrRoutePfxLen']][$entryClean['inetCidrRoutePolicy']]['ipv4'][$entryClean['inetCidrRouteNextHop']] ?? null;
         if (isset($current) && isset($current['db']) && count($current['db']) > 0 && $delete_row[$current['db']['route_id']] != 1) {
             //we already have a row in DB
             $entryClean['route_id'] = $current['db']['route_id'];
@@ -123,6 +123,7 @@ if (isset($ipForwardNb['0']['inetCidrRouteNumber']) && $ipForwardNb['0']['inetCi
     $oid = '.1.3.6.1.2.1.4.24.7.1';
     $res = snmpwalk_group($device, $oid, $mib, 6, []);
     $ipForwardNb['0']['inetCidrRouteNumber'] = count($res); // Some cisco devices report ipv4+ipv6 but only include ipv6 in this table
+    $entryPerType = [];
     echo 'inetCidrRoute ';
     foreach ($res as $inetCidrRouteDestType => $next1) {
         //ipv4 or ipv6
@@ -150,17 +151,19 @@ if (isset($ipForwardNb['0']['inetCidrRouteNumber']) && $ipForwardNb['0']['inetCi
                     unset($entry['inetCidrRouteMetric4']);
                     unset($entry['inetCidrRouteMetric5']);
                     unset($entry['inetCidrRouteStatus']);
-                    $entryPerType[$inetCidrRouteDestType]++;
-                    $current = $mixed[''][$inetCidrRouteDestType][$inetCidrRouteDest][$inetCidrRoutePfxLen][$inetCidrRoutePolicy][$inetCidrRouteNextHopType][$inetCidrRouteNextHop];
+                    $entryPerType[$inetCidrRouteDestType] = isset($entryPerType[$inetCidrRouteDestType]) ? $entryPerType[$inetCidrRouteDestType] + 1 : 1;
+
+                    $current = $mixed[''][$inetCidrRouteDestType][$inetCidrRouteDest][$inetCidrRoutePfxLen][$inetCidrRoutePolicy][$inetCidrRouteNextHopType][$inetCidrRouteNextHop] ?? [];
                     if (! empty($current['db']) && $delete_row[$current['db']['route_id']] != 1) {
                         //we already have a row in DB
                         $entry['route_id'] = $current['db']['route_id'];
                         $update_row[] = $entry;
                     } else {
                         d_echo(isset($current));
-                        d_echo(isset($current['db']));
-                        d_echo($current['db']);
-                        d_echo($delete_row[$current['db']['route_id']]);
+                        if (isset($current['db'])) {
+                            d_echo($current['db']);
+                            d_echo($delete_row[$current['db']['route_id']]);
+                        }
                         $entry['created_at'] = ['NOW()'];
                         $create_row[] = $entry;
                     }

@@ -154,6 +154,10 @@ trait YamlOSDiscovery
     private function replaceStringsInFields(Device $device, array $os_yaml): void
     {
         foreach ($this->osFields as $field) {
+            // Nothing to replace if its empty
+            if (empty($device->$field)) {
+                continue;
+            }
             foreach ($os_yaml["{$field}_replace"] ?? [] as $replacements) {
                 $search = $replacements;
                 $replacement = '';
@@ -165,7 +169,7 @@ trait YamlOSDiscovery
                 }
 
                 // check for regex
-                if (preg_match($search, $device->$field)) {
+                if (StringHelpers::isRegexPatternMaybe($search) && @preg_match($search, $device->$field) !== false) {
                     $device->$field = preg_replace($search, $replacement, $device->$field);
                 } else {
                     $device->$field = str_replace($search, $replacement, $device->$field);

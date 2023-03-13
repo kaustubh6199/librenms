@@ -120,7 +120,7 @@ class OSModulesTest extends DBTestCase
                 $expected,
                 $actual,
                 "OS $os: Discovered $module data does not match that found in $filename\n"
-                . print_r(array_diff($expected, $actual), true)
+               // . print_r(array_diff($expected, $actual), true)
                 . $helper->getDiscoveryOutput($phpunit_debug ? null : $module)
                 . "\nOS $os: Discovered $module data does not match that found in $filename"
             );
@@ -130,7 +130,7 @@ class OSModulesTest extends DBTestCase
                 continue;
             }
 
-            if ($expected_data[$module]['poller'] == 'matches discovery') {
+            if (isset($expected_data[$module]['poller']) && $expected_data[$module]['poller'] == 'matches discovery') {
                 $expected = $expected_data[$module]['discovery'];
             } else {
                 $expected = $expected_data[$module]['poller'] ?? [];
@@ -140,7 +140,7 @@ class OSModulesTest extends DBTestCase
                 $expected,
                 $actual,
                 "OS $os: Polled $module data does not match that found in $filename\n"
-                . print_r(array_diff($expected, $actual), true)
+                //. print_r(array_diff($expected, $actual), true)
                 . $helper->getPollerOutput($phpunit_debug ? null : $module)
                 . "\nOS $os: Polled $module data does not match that found in $filename"
             );

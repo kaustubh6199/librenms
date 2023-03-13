@@ -152,7 +152,7 @@ function discover_device(&$device, $force_module = false)
 
             try {
                 include "includes/discovery/$module.inc.php";
-            } catch (Throwable $e) {
+            } catch (\Exception $e) {
                 // isolate module exceptions so they don't disrupt the polling process
                 Log::error("%rError discovering $module module for {$device['hostname']}.%n $e", ['color' => true]);
                 \App\Models\Eventlog::log("Error discovering $module module. Check log file for more details.", $device['device_id'], 'discovery', Alert::ERROR);
@@ -767,7 +767,7 @@ function get_device_divisor($device, $os_version, $sensor_type, $oid)
         }
     } elseif ($device['os'] == 'huaweiups') {
         if ($sensor_type == 'frequency') {
-            if (Str::startsWith($device['hardware'], 'UPS2000')) {
+            if (is_string($device['hardware']) && Str::startsWith($device['hardware'], 'UPS2000')) {
                 return 10;
             }
 
@@ -886,7 +886,7 @@ function discovery_process(&$valid, $os, $sensor_class, $pre_cache)
                 // get the value for this sensor, check 'value' and 'oid', if state string, translate to a number
                 $data['value'] = isset($data['value']) ? $data['value'] : $data['oid'];  // fallback to oid if value is not set
 
-                $snmp_value = $snmp_data[$data['value']];
+                $snmp_value = $snmp_data[$data['value']] ?? null;
                 if (! is_numeric($snmp_value)) {
                     if ($sensor_class === 'temperature') {
                         // For temp sensors, try and detect fahrenheit values
@@ -894,7 +894,7 @@ function discovery_process(&$valid, $os, $sensor_class, $pre_cache)
                             $user_function = 'fahrenheit_to_celsius';
                         }
                     }
-                    preg_match('/-?\d*\.?\d+/', $snmp_value, $temp_response);
+                    preg_match('/-?\d*\.?\d+/', $snmp_value ?? '', $temp_response);
                     if (! empty($temp_response[0])) {
                         $snmp_value = $temp_response[0];
                     }
@@ -991,7 +991,7 @@ function discovery_process(&$valid, $os, $sensor_class, $pre_cache)
                         }
                     }
 
-                    discover_sensor($valid['sensor'], $sensor_class, $device, $oid, $uindex, $sensor_name, $descr, $divisor, $multiplier, $low_limit, $low_warn_limit, $warn_limit, $high_limit, $value, 'snmp', $entPhysicalIndex, $entPhysicalIndex_measured, $user_function, $group, $data['rrd_type']);
+                    discover_sensor($valid['sensor'], $sensor_class, $device, $oid, $uindex, $sensor_name, $descr, $divisor, $multiplier, $low_limit, $low_warn_limit, $warn_limit, $high_limit, $value, 'snmp', $entPhysicalIndex, $entPhysicalIndex_measured, $user_function, $group, $data['rrd_type'] ?? 'GAUGE');
 
                     if ($sensor_class === 'state') {
                         create_sensor_to_state_index($device, $sensor_name, $uindex);
@@ -1173,7 +1173,7 @@ function add_cbgp_peer($device, $peer, $afi, $safi)
             'bgpPeerIdentifier' => $peer['ip'],
             'afi' => $afi,
             'safi' => $safi,
-            'context_name' => $device['context_name'],
+            'context_name' => $device['context_name'] ?? null,
             'AcceptedPrefixes' => 0,
             'DeniedPrefixes' => 0,
             'PrefixAdminLimit' => 0,
