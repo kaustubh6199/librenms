@@ -25,8 +25,8 @@
 
 namespace App\Http\Controllers\Select;
 
+use App\Facades\Config;
 use App\Models\Device;
-use LibreNMS\Config;
 
 class DeviceFieldController extends SelectController
 {

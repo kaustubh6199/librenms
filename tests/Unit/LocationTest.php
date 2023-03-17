@@ -25,9 +25,9 @@
 
 namespace LibreNMS\Tests\Unit;
 
+use App\Facades\Config;
 use App\Models\Device;
 use App\Models\Location;
-use LibreNMS\Config;
 use LibreNMS\Interfaces\Geocoder;
 use LibreNMS\Tests\TestCase;
 use LibreNMS\Util\Dns;

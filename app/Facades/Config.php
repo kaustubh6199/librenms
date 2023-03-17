@@ -1,6 +1,6 @@
 <?php
 /**
- * CollectdController.php
+ * DeviceCache.php
  *
  * -Description-
  *
@@ -19,40 +19,19 @@
  *
  * @link       https://www.librenms.org
  *
- * @copyright  2020 Tony Murray
+ * @copyright  2019 Tony Murray
  * @author     Tony Murray <murraytony@gmail.com>
  */
 
-namespace App\Http\Controllers\Device\Tabs;
+namespace App\Facades;
 
-use App\Facades\Config;
-use App\Models\Device;
-use LibreNMS\Interfaces\UI\DeviceTab;
+use Illuminate\Support\Facades\Facade;
 
-class CollectdController implements DeviceTab
+class Config extends Facade
 {
-    public function visible(Device $device): bool
+    protected static function getFacadeAccessor()
     {
-        return Config::has('collectd_dir') && is_dir(Config::get('collectd_dir') . '/' . $device->hostname . '/');
-    }
-
-    public function slug(): string
-    {
-        return 'collectd';
-    }
-
-    public function icon(): string
-    {
-        return 'fa-pie-chart';
-    }
-
-    public function name(): string
-    {
-        return __('CollectD');
-    }
-
-    public function data(Device $device): array
-    {
-        return [];
+        /** @phpstan-ignore-next-line */
+        return \LibreNMS\Config::class;
     }
 }

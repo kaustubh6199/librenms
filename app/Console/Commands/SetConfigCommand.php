@@ -4,12 +4,12 @@ namespace App\Console\Commands;
 
 use App\Console\Commands\Traits\CompletesConfigArgument;
 use App\Console\LnmsCommand;
+use App\Facades\Config;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use JsonSchema\Constraints\Constraint;
 use JsonSchema\Exception\ValidationException;
 use JsonSchema\Validator;
-use LibreNMS\Config;
 use LibreNMS\DB\Eloquent;
 use LibreNMS\Util\DynamicConfig;
 use LibreNMS\Util\OS;
@@ -214,7 +214,7 @@ class SetConfigCommand extends LnmsCommand
     {
         // prep data to be validated
         OS::loadDefinition($os);
-        $os_data = \LibreNMS\Config::get("os.$os");
+        $os_data = \App\Facades\Config::get("os.$os");
         if ($os_data === null) {
             throw new ValidationException(trans('commands.config:set.errors.invalid_os', ['os' => $os]));
         }

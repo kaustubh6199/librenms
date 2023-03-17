@@ -23,8 +23,8 @@
  * @author     Neil Lathwood <gh+n@laf.io>
  */
 
+use App\Facades\Config;
 use LibreNMS\Alerting\QueryBuilderParser;
-use LibreNMS\Config;
 
 header('Content-type: application/json');
 

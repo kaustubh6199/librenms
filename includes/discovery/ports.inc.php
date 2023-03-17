@@ -1,8 +1,8 @@
 <?php
 
 // Build SNMP Cache Array
+use App\Facades\Config;
 use App\Models\PortGroup;
-use LibreNMS\Config;
 use LibreNMS\Enum\PortAssociationMode;
 use LibreNMS\Util\StringHelpers;
 

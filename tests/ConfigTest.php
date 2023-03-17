@@ -2,7 +2,7 @@
 /**
  * ConfigTest.php
  *
- * Tests for LibreNMS\Config
+ * Tests for App\Facades\Config
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 
 namespace LibreNMS\Tests;
 
-use LibreNMS\Config;
+use App\Facades\Config;
 
 class ConfigTest extends TestCase
 {

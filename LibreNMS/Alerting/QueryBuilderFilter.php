@@ -25,8 +25,8 @@
 
 namespace LibreNMS\Alerting;
 
+use App\Facades\Config;
 use Illuminate\Support\Str;
-use LibreNMS\Config;
 use LibreNMS\DB\Schema;
 
 class QueryBuilderFilter implements \JsonSerializable

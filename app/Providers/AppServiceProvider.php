@@ -2,13 +2,13 @@
 
 namespace App\Providers;
 
+use App\Facades\Config;
 use App\Models\Sensor;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use LibreNMS\Cache\PermissionsCache;
-use LibreNMS\Config;
 use LibreNMS\Util\IP;
 use LibreNMS\Util\Validate;
 use Validator;
@@ -32,7 +32,8 @@ class AppServiceProvider extends ServiceProvider
             return new \LibreNMS\Cache\Device();
         });
         $this->app->singleton('git', function ($app) {
-            return new \LibreNMS\Util\Git();
+            /** @phpstan-ignore-next-line */
+            return new \LibreNMS\Util\Git($app->make(\LibreNMS\Config::class));
         });
 
         $this->app->bind(\App\Models\Device::class, function () {
@@ -61,10 +62,10 @@ class AppServiceProvider extends ServiceProvider
     private function bootCustomBladeDirectives()
     {
         Blade::if('config', function ($key, $value = true) {
-            return \LibreNMS\Config::get($key) == $value;
+            return \App\Facades\Config::get($key) == $value;
         });
         Blade::if('notconfig', function ($key) {
-            return ! \LibreNMS\Config::get($key);
+            return ! \App\Facades\Config::get($key);
         });
         Blade::if('admin', function () {
             return auth()->check() && auth()->user()->isAdmin();

@@ -26,6 +26,7 @@
 namespace App\Http\Controllers;
 
 use App;
+use App\Facades\Config;
 use App\Models\Application;
 use App\Models\Callback;
 use App\Models\Device;
@@ -52,8 +53,6 @@ use App\Models\Vrf;
 use App\Models\WirelessSensor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use LibreNMS\Config;
-use LibreNMS\Data\Store\Rrd;
 use LibreNMS\Util\Version;
 
 class AboutController extends Controller
@@ -78,7 +77,7 @@ class AboutController extends Controller
             'version_laravel' => App::version(),
             'version_python' => $version->python(),
             'version_webserver' => $request->server('SERVER_SOFTWARE'),
-            'version_rrdtool' => Rrd::version(),
+            'version_rrdtool' => $version->rrdtool(),
             'version_netsnmp' => str_replace('version: ', '', rtrim(shell_exec(Config::get('snmpget', 'snmpget') . ' -V 2>&1'))),
 
             'stat_apps' => Application::count(),

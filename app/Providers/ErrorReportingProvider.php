@@ -25,6 +25,7 @@
 
 namespace App\Providers;
 
+use App\Facades\Config;
 use App\Logging\Reporting\Middleware\AddGitInformation;
 use App\Logging\Reporting\Middleware\CleanContext;
 use App\Logging\Reporting\Middleware\SetGroups;
@@ -35,7 +36,6 @@ use Facade\FlareClient\Report;
 use Facade\Ignition\Facades\Flare;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use LibreNMS\Config;
 use LibreNMS\Util\Git;
 
 class ErrorReportingProvider extends \Facade\Ignition\IgnitionServiceProvider
@@ -51,6 +51,9 @@ class ErrorReportingProvider extends \Facade\Ignition\IgnitionServiceProvider
 
     public function boot(): void
     {
+        if (env('ERROR_REPORTING', false) == false) {
+            return;
+        }
         /* @phpstan-ignore-next-line */
         if (! method_exists(\Facade\FlareClient\Flare::class, 'filterReportsUsing')) {
             Log::debug("Flare client too old, disabling Ignition to avoid bug.\n");

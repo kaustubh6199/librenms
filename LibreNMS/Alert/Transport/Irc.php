@@ -23,8 +23,8 @@
 
 namespace LibreNMS\Alert\Transport;
 
+use App\Facades\Config;
 use LibreNMS\Alert\Transport;
-use LibreNMS\Config;
 
 class Irc extends Transport
 {

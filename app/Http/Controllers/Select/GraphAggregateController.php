@@ -25,10 +25,10 @@
 
 namespace App\Http\Controllers\Select;
 
+use App\Facades\Config;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use LibreNMS\Config;
 
 class GraphAggregateController extends Controller
 {

@@ -26,10 +26,10 @@
 namespace App\Console\Commands;
 
 use App\Console\LnmsCommand;
+use App\Facades\Config;
 use App\Models\User;
 use Illuminate\Validation\Rule;
 use LibreNMS\Authentication\LegacyAuth;
-use LibreNMS\Config;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 

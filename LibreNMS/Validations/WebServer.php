@@ -25,8 +25,8 @@
 
 namespace LibreNMS\Validations;
 
+use App\Facades\Config;
 use Illuminate\Support\Str;
-use LibreNMS\Config;
 use LibreNMS\Validator;
 
 class WebServer extends BaseValidation

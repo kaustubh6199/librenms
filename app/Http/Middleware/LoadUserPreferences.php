@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Facades\Config;
 use Closure;
-use LibreNMS\Config;
 
 class LoadUserPreferences
 {

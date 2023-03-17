@@ -25,10 +25,10 @@
 
 namespace LibreNMS\Data\Source;
 
+use App\Facades\Config;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use LibreNMS\Config;
 use LibreNMS\Util\Oid;
 use Log;
 

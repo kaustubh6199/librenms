@@ -1,7 +1,7 @@
 <?php
 
+use App\Facades\Config;
 use Illuminate\Support\Str;
-use LibreNMS\Config;
 use LibreNMS\Enum\PowerState;
 
 // FIXME should do the deletion etc in a common file perhaps? like for the sensors

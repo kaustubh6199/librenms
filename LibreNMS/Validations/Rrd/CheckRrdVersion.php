@@ -25,9 +25,9 @@
 
 namespace LibreNMS\Validations\Rrd;
 
+use App\Facades\Config;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Support\Str;
-use LibreNMS\Config;
 use LibreNMS\Interfaces\Validation;
 use LibreNMS\Interfaces\ValidationFixer;
 use LibreNMS\Util\Version;

@@ -1,7 +1,7 @@
 <?php
 
+use App\Facades\Config;
 use Illuminate\Support\Str;
-use LibreNMS\Config;
 
 // IPMI - We can discover this on poll!
 if ($ipmi['host'] = get_dev_attrib($device, 'ipmi_hostname')) {

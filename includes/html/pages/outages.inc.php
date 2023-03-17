@@ -13,8 +13,8 @@
  * @author     LibreNMS Contributors
 */
 
+use App\Facades\Config;
 use Carbon\Carbon;
-use LibreNMS\Config;
 
 $no_refresh = true;
 $param = [];
