@@ -3,7 +3,7 @@
 echo 'RFC1628 ';
 
 // Battery Status (Value : 1 unknown, 2 batteryNormal, 3 batteryLow, 4 batteryDepleted)
-$state = snmp_get($device, 'upsBatteryStatus.0', '-Ovqe', 'UPS-MIB');
+$state = SnmpQuery::get('UPS-MIB::upsBatteryStatus.0')->value();
 if (is_numeric($state)) {
     //Create State Index
     $state_name = 'upsBatteryStatusState';
@@ -26,15 +26,7 @@ if (is_numeric($state)) {
         $sensor_index,
         $state_name,
         'Battery Status',
-        1,
-        1,
-        null,
-        null,
-        null,
-        null,
-        $state,
-        'snmp',
-        0
+        current: $state,
     );
 
     //Create Sensor To State Index
@@ -42,7 +34,7 @@ if (is_numeric($state)) {
 }
 
 // Output Source (Value : 1 other, 2 none, 3 normal, 4 bypass, 5 battery, 6 booster, 7 reducer)
-$state = snmp_get($device, 'upsOutputSource.0', '-Ovqe', 'UPS-MIB');
+$state = SnmpQuery::get('UPS-MIB::upsOutputSource.0')->value();
 if (is_numeric($state)) {
     //Create State Index
     $state_name = 'upsOutputSourceState';
@@ -68,15 +60,7 @@ if (is_numeric($state)) {
         $sensor_index,
         $state_name,
         'Output Source',
-        1,
-        1,
-        null,
-        null,
-        null,
-        null,
-        $state,
-        'snmp',
-        0
+        current: $state,
     );
 
     //Create Sensor To State Index

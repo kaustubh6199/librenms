@@ -3,9 +3,10 @@
 // RFC1628 UPS
 echo 'RFC1628 ';
 
-$value = snmp_get($device, 'upsEstimatedChargeRemaining.0', '-OvqU', 'UPS-MIB');
+$value = SnmpQuery::get('UPS-MIB::upsEstimatedChargeRemaining.0')->value();
 
 if (is_numeric($value)) {
+    $divisor = $os->getUpsMibDivisor('UPS-MIB::upsEstimatedChargeRemaining');
     discover_sensor(
         $valid['sensor'],
         'charge',
@@ -14,12 +15,12 @@ if (is_numeric($value)) {
         500,
         'rfc1628',
         'Battery charge remaining',
-        1,
+        $divisor,
         1,
         15,
         50,
         null,
         101,
-        $value
+        $value / $divisor
     );
 }

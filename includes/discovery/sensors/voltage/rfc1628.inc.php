@@ -2,125 +2,83 @@
 
 echo 'RFC1628 ';
 
-$battery_volts = snmp_get($device, 'upsBatteryVoltage.0', '-OqvU', 'UPS-MIB');
+$battery_volts = SnmpQuery::get('UPS-MIB::upsBatteryVoltage.0')->value();
 if (is_numeric($battery_volts)) {
-    $volt_oid = '.1.3.6.1.2.1.33.1.2.5.0';
-    $divisor = get_device_divisor($device, $pre_cache['poweralert_serial'] ?? 0, 'voltage', $volt_oid);
+    $divisor = $os->getUpsMibDivisor('UPS-MIB::upsBatteryVoltage');
 
     discover_sensor(
         $valid['sensor'],
         'voltage',
         $device,
-        $volt_oid,
+        '.1.3.6.1.2.1.33.1.2.5.0',
         '1.2.5.0',
         'rfc1628',
         'Battery',
         $divisor,
-        1,
-        null,
-        null,
-        null,
-        null,
-        $battery_volts / $divisor
+        current: $battery_volts / $divisor
     );
 }
 
-$output_volts = snmpwalk_group($device, 'upsOutputVoltage', 'UPS-MIB');
+$output_volts = SnmpQuery::walk('UPS-MIB::upsOutputVoltage')->filterBadLines()->table()['UPS-MIB::upsOutputVoltage'] ?? [];
 foreach ($output_volts as $index => $data) {
-    $volt_oid = ".1.3.6.1.2.1.33.1.4.4.1.2.$index";
-    $divisor = get_device_divisor($device, $pre_cache['poweralert_serial'] ?? 0, 'voltage', $volt_oid);
+    $divisor = $os->getUpsMibDivisor('UPS-MIB::upsOutputVoltage');
     $descr = 'Output';
     if (count($output_volts) > 1) {
         $descr .= " Phase $index";
     }
 
-    $upsOutputVoltage_value = $data['upsOutputVoltage'];
-
-    if (is_array($data['upsOutputVoltage'])) {
-        $upsOutputVoltage_value = $data['upsOutputVoltage'][0];
-        $volt_oid .= '.0';
-    }
-
     discover_sensor(
         $valid['sensor'],
         'voltage',
         $device,
-        $volt_oid,
+        ".1.3.6.1.2.1.33.1.4.4.1.2.$index",
         $index,
         'rfc1628',
         $descr,
         $divisor,
-        1,
-        null,
-        null,
-        null,
-        null,
-        $upsOutputVoltage_value / $divisor
+        current: $data / $divisor
     );
 }
 
-$input_volts = snmpwalk_group($device, 'upsInputVoltage', 'UPS-MIB');
+$input_volts = SnmpQuery::walk('UPS-MIB::upsInputVoltage')->filterBadLines()->table()['UPS-MIB::upsInputVoltage'] ?? [];
 foreach ($input_volts as $index => $data) {
-    $volt_oid = ".1.3.6.1.2.1.33.1.3.3.1.3.$index";
-    $divisor = get_device_divisor($device, $pre_cache['poweralert_serial'] ?? 0, 'voltage', $volt_oid);
+    $divisor = $os->getUpsMibDivisor('UPS-MIB::upsInputVoltage');
     $descr = 'Input';
     if (count($input_volts) > 1) {
         $descr .= " Phase $index";
     }
 
-    $upsInputVoltage_value = $data['upsInputVoltage'];
-
-    if (is_array($data['upsInputVoltage'])) {
-        $upsInputVoltage_value = $data['upsInputVoltage'][0];
-        $volt_oid .= '.0';
-    }
-
     discover_sensor(
         $valid['sensor'],
         'voltage',
         $device,
-        $volt_oid,
+        ".1.3.6.1.2.1.33.1.3.3.1.3.$index",
         100 + $index,
         'rfc1628',
         $descr,
         $divisor,
-        1,
-        null,
-        null,
-        null,
-        null,
-        $upsInputVoltage_value / $divisor
+        current: $data / $divisor
     );
 }
 
-$bypass_volts = snmpwalk_group($device, 'upsBypassVoltage', 'UPS-MIB');
+$bypass_volts = SnmpQuery::walk('UPS-MIB::upsBypassVoltage')->filterBadLines()->table()['UPS-MIB::upsBypassVoltage'] ?? [];
 foreach ($bypass_volts as $index => $data) {
-    $volt_oid = ".1.3.6.1.2.1.33.1.5.3.1.2.$index";
-    $divisor = get_device_divisor($device, $pre_cache['poweralert_serial'] ?? 0, 'voltage', $volt_oid);
+    $divisor = $os->getUpsMibDivisor('UPS-MIB::upsBypassVoltage');
     $descr = 'Bypass';
     if (count($bypass_volts) > 1) {
         $descr .= " Phase $index";
-    }
-    if (is_array($data['upsBypassVoltage'])) {
-        $data['upsBypassVoltage'] = $data['upsBypassVoltage'][0];
-        $volt_oid .= '.0';
     }
 
     discover_sensor(
         $valid['sensor'],
         'voltage',
         $device,
-        $volt_oid,
+        ".1.3.6.1.2.1.33.1.5.3.1.2.$index",
         200 + $index,
         'rfc1628',
         $descr,
         $divisor,
-        1,
-        null,
-        null,
-        null,
-        null,
-        $data['upsBypassVoltage'] / $divisor
+        current: $data / $divisor
     );
 }
 
