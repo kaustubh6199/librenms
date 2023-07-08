@@ -27,11 +27,10 @@ namespace LibreNMS\Tests\Unit\Data;
 
 use LibreNMS\Config;
 use LibreNMS\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @group datastores
- */
-class DatastoreTest extends TestCase
+#[Group('datastores')]
+final class DatastoreTest extends TestCase
 {
     protected function setUp(): void
     {

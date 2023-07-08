@@ -10,13 +10,13 @@ use LibreNMS\Config;
 use LibreNMS\Tests\Browser\Pages\LoginPage;
 use LibreNMS\Tests\Browser\Pages\TwoFactorPage;
 use LibreNMS\Tests\DuskTestCase;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Class LoginTest
- *
- * @group browser
  */
-class LoginTest extends DuskTestCase
+#[Group('browser')]
+final class LoginTest extends DuskTestCase
 {
     protected function setUp(): void
     {
