@@ -1034,6 +1034,13 @@
                 "{{ $ip }}":  "ip"
             }
         },
+        "device_add_overrides": {
+            "group": "webui",
+            "section": "device",
+            "order": 5,
+            "default": false,
+            "type": "boolean"
+        },
         "device_perf_purge": {
             "default": 7,
             "units": "days",
