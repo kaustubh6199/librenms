@@ -463,9 +463,6 @@ return [
         'fping' => [
             'description' => 'fping 路徑',
         ],
-        'fping6' => [
-            'description' => 'fping6 路徑',
-        ],
         'fping_options' => [
             'count' => [
                 'description' => 'fping 次數',

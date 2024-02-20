@@ -668,9 +668,6 @@ return [
         'fping' => [
             'description' => 'Шлях до fping',
         ],
-        'fping6' => [
-            'description' => 'Шлях до fping6',
-        ],
         'fping_options' => [
             'count' => [
                 'description' => 'Кількість fping',
