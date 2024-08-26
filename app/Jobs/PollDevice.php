@@ -39,7 +39,7 @@ class PollDevice implements ShouldQueue, ShouldBeUnique
     /**
      * @param  int  $device_id
      * @param  array<string, bool|string[]>  $module_overrides
-     * @param  int $verbosity
+     * @param  int  $verbosity
      */
     public function __construct(
         public int $device_id,
