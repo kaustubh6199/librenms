@@ -22,7 +22,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $this->scheduleMarkWorking($schedule);
-        $schedule->job(new DispatchJobs, 'dispatch')->everyTenSeconds()->onOneServer();
+        $schedule->job(new DispatchJobs)->everyTenSeconds()->onOneServer();
         $this->scheduleMaintenance($schedule);  // should be after all others
     }
 
