@@ -2,8 +2,8 @@
 
 namespace App\Console;
 
-use App\Console\Commands\DevicePoll;
 use App\Console\Commands\MaintenanceFetchOuis;
+use App\Jobs\DispatchJobs;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Facades\Cache;
@@ -22,7 +22,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $this->scheduleMarkWorking($schedule);
-        $schedule->command(DevicePoll::class, ['--dispatch', 'needs_polling'])->everyTenSeconds()->onOneServer();
+        $schedule->job(new DispatchJobs, 'dispatch')->everyTenSeconds()->onOneServer();
         $this->scheduleMaintenance($schedule);  // should be after all others
     }
 
