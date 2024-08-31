@@ -3,7 +3,7 @@
 namespace App\Console;
 
 use App\Console\Commands\MaintenanceFetchOuis;
-use App\Jobs\DispatchJobs;
+use App\Jobs\DispatchPollJobs;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Facades\Cache;
@@ -22,7 +22,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $this->scheduleMarkWorking($schedule);
-        $schedule->job(new DispatchJobs)->everyTenSeconds()->onOneServer();
+        $schedule->job(new DispatchPollJobs('needs_polling'))->everyTenSeconds()->onOneServer();
         $this->scheduleMaintenance($schedule);  // should be after all others
     }
 
