@@ -9,6 +9,7 @@ use App\Polling\Measure\Measurement;
 use App\Polling\Measure\MeasurementManager;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -19,14 +20,16 @@ use LibreNMS\Enum\Severity;
 use LibreNMS\OS;
 use LibreNMS\Polling\ConnectivityHelper;
 use LibreNMS\RRD\RrdDefinition;
+use LibreNMS\Util\Debug;
 use LibreNMS\Util\Dns;
 use LibreNMS\Util\Module;
 use Throwable;
 
-class PollDevice implements ShouldQueue
+class PollDevice implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $uniqueFor = 3600;
     private ?\App\Models\Device $device = null;
     private ?array $deviceArray = null;
     /**
@@ -37,11 +40,23 @@ class PollDevice implements ShouldQueue
     /**
      * @param  int  $device_id
      * @param  array<string, bool|string[]>  $module_overrides
+     * @param  int  $verbosity
      */
     public function __construct(
         public int $device_id,
         public array $module_overrides = [],
+        public int $verbosity = -1,
     ) {
+    }
+
+    public function uniqueId(): int
+    {
+        return $this->device_id;
+    }
+
+    public function displayName(): string
+    {
+        return "PollDevice:$this->device_id";
     }
 
     /**
@@ -49,6 +64,18 @@ class PollDevice implements ShouldQueue
      */
     public function handle()
     {
+        if ($this->verbosity >= 128) {
+            \Log::setDefaultDriver('console_debug');
+            Debug::set();
+            if ($this->verbosity >= 256) {
+                Debug::setVerbose();
+            }
+        } elseif ($this->verbosity >= 32) {
+            \Log::setDefaultDriver('console');
+        } elseif ($this->verbosity > 0) {
+            \Log::setDefaultDriver('stack');
+        }
+
         $this->initDevice();
         PollingDevice::dispatch($this->device);
         $this->os = OS::make($this->deviceArray);

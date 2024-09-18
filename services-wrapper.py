@@ -3,9 +3,9 @@
 This is a Bootstrap script for wrapper.py, in order to retain compatibility with earlier LibreNMS setups
 """
 
+import logging
 import os
 import sys
-import logging
 from argparse import ArgumentParser
 
 import LibreNMS
